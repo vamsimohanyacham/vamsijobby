@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import {Component} from 'react'
 import Cookies from 'js-cookie'
 import {Redirect} from 'react-router-dom'
 import './index.css'
@@ -8,7 +8,7 @@ class LoginForm extends Component {
 
   onSubmitSuccess = jwtToken => {
     const {history} = this.props
-    Cookies.set('token', jwtToken, {expires: 30})
+    Cookies.set('jwt_token', jwtToken, {expires: 30})
     history.replace('/')
   }
 
@@ -38,11 +38,27 @@ class LoginForm extends Component {
     }
 
     try {
+      // First API call
       const response = await fetch(loginApiUrl, options)
       const data = await response.json()
 
       if (response.ok) {
-        this.onSubmitSuccess(data.token)
+        console.log('avidhi nayana')
+        // Second API call only if the first one is successful
+        const userDetails = {username: 'rahul', password: 'rahul@2021'}
+        const apiUrl = 'https://apis.ccbp.in/login'
+        const option = {
+          method: 'POST',
+          body: JSON.stringify(userDetails),
+        }
+        const res = await fetch(apiUrl, option)
+        const datain = await res.json()
+
+        if (res.ok) {
+          this.onSubmitSuccess(datain.jwt_token)
+        } else {
+          this.onSubmitFailure(datain.error)
+        }
       } else {
         this.onSubmitFailure(data.error)
       }
@@ -95,11 +111,10 @@ class LoginForm extends Component {
 
     const onsignup = () => {
       const {history} = this.props
-      Cookies.remove('token')
       history.replace('/signup')
     }
 
-    const jwtToken = Cookies.get('token')
+    const jwtToken = Cookies.get('jwt_token')
     if (jwtToken !== undefined) {
       return <Redirect to="/" />
     }
